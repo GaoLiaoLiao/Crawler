@@ -1,112 +1,82 @@
-__author__ = 'GaoLiaoLiao'
-def sum(a, b, c, d):
-    return a + b + c + d
+import requests
+from bs4 import BeautifulSoup              #利用BeautifulSoup将网页的代码按照标准的缩进打印出来
+import re
 
-values1 = (1, 2)
-values2 = { 'c': 10, 'd': 15 }
-s = sum(*values1, **values2)
-# will execute as:
-# s = sum(1, 2, c=10, d=15)
-print(s)
+# response=requests.get('http://www.baidu.com')
+# response.encoding='utf-8'
+# print(response.text)
 
-first, *rest = [1,2,3,4]
-print(first)
-print(rest)
+# 基本用法
+html=requests.get('https://www.baidu.com')
+soup=BeautifulSoup(html.content,'lxml')     #注意这里的html.content,不能直接传入html
+print(soup.prettify())
+print(soup.title.string)
 
-first, *l, last = [1,2,3,4]
-print(first)
-print(l)
-print(last)
+# 选择元素
+print(soup.title)
+print(soup.p)
 
-# Also Python 3 adds new semantic (refer PEP 3102: reference: https://www.python.org/dev/peps/pep-3102/):
-# def func(arg1, arg2, arg3, *, kwarg1, kwarg2):
-#     pass
-# Such function accepts only 3 positional arguments, and everything after * can only be passed as keyword arguments.
-#
+# 提取信息
+print(soup.title.name)    # 获取名称
+print(soup.p.attrs)       # 获取属性
+print(soup.p.attrs['name'])
 
+# 获取内容
+print(soup.p.string)
 
-def phuck(fn):
-    print("phuck %s!" % fn.__name__[::-1].upper())
+# 嵌套选择
+print(soup.head.title)
+print(type(soup.head.title))
+print(soup.head.title.string)
 
-@phuck
-def wfg():
-    pass
+# 关联选择
+# 子节点和子孙节点
+print(soup.p.contents)   # 获取p节点的直接子节点(以列表形式返回)，即子孙节点
+print(soup.p.children)   # 返回结果是生成器类型，接下来用for循环
+for i,child in enumerate(soup.p.children):
+    print(i,child)
 
-def bread(func):
-    def wrapper():
-        print("</''''''\>")
-        func()
-        print("<\______/>")
-    return wrapper
+print(soup.p.descendants)   # 获取子孙节点
+for i,child in enumerate(soup.p.descendants):
+    print(i,child)
 
-def ingredients(func):
-    def wrapper():
-        print("#tomatoes#")
-        func()
-        print("~salad~")
-    return wrapper
+# 父节点和祖先节点
+print(soup.a.parent)     # 获取a节点的直接父节点
+print(soup.a.parents)     # 获取a节点的祖先节点
 
-def sandwich(food="--ham--"):
-    print(food)
+# 兄弟节点
+print(soup.a.next_sibling)
+print(soup.a.previous_sibling)
 
-@bread
-@ingredients
-def sandwich(food="--ham--"):
-    print(food)
+# 提取信息
+print(soup.a.next_sibling.string)
+print(soup.a.previous_sibling.text)
 
-sandwich()
+# 方法选择器
+# find_all(name,attrs,recursive,text,**kwargs)
+print(soup.find_all('ul'))
+for ul in soup.find_all(name='ul'):
+    print(ul.find_all(name='li'))
 
-#outputs:
-#</''''''\>
-# #tomatoes#
-# --ham--
-# ~salad~
-#<\______/>
+print(soup.find_all(attrs={'name':'list-1'}))    # 返回所有匹配的元素组成的列表
+print(soup.find_all(id='list-1'))
 
+print(soup.find_all(text=re.compile('link')))
 
-#example 3:
-def a_decorator_passing_arbitrary_arguments(function_to_decorate):
-    # The wrapper accepts any arguments
-    def a_wrapper_accepting_arbitrary_arguments(*args, **kwargs):
-        print(args)
-        print(kwargs)
-        function_to_decorate(*args, **kwargs)
-    return a_wrapper_accepting_arbitrary_arguments
+print(soup.find(name='ul'))    # 返回第一个匹配的元素
 
-@a_decorator_passing_arbitrary_arguments
-def function_with_named_arguments(a, b, c, platypus="Why not ?"):
-    print("Do {0}, {1} and {2} like platypus? {3}".format(a, b, c, platypus))
+# CSS选择器
+# print(soup.select('ul li'))
+# print(soup.select(#list-2 .element))
+# print(soup.select('.panel .panel-heading'))
 
+# 获取属性
+for ul in soup.select('ul'):
+    print(ul['id'])
+    print(ul.attrs['id'])
 
-function_with_named_arguments("Bill", "Linus", "Steve", platypus="Indeed!")
-# 参数只打印了一次
-# ('Bill', 'Linus', 'Steve')
-# {'platypus': 'Indeed!'}
-# Do Bill, Linus and Steve like platypus? Indeed!
-
-
-# decorated_function = a_decorator_passing_arbitrary_arguments(function_with_named_arguments)
-# decorated_function("Bill", "Linus", "Steve", platypus="Indeed!")
-# 参数打印了两次
-# ('Bill', 'Linus', 'Steve')
-# {'platypus': 'Indeed!'}
-# ('Bill', 'Linus', 'Steve')
-# {'platypus': 'Indeed!'}
-# Do Bill, Linus and Steve like platypus? Indeed!
-
-def make_html_tag(tag, *args, **kwargs):
-    def real_decorator(fn):
-        if "css_class" in kwargs:
-            css_class = " class='{0}'".format(kwargs["css_class"])
-        else:
-            css_class = ""
-        def wrapped(content):
-            return "<"+tag+css_class+">" + fn(content) + "</"+tag+">"
-        return wrapped
-    return real_decorator
-
-@make_html_tag(tag="b", css_class="bold_css")
-@make_html_tag(tag="i", css_class="italic_css")
-def hello(content):
-    return content
-print(hello("content you want to wrap"))
+# 获取文本
+for li in soup.select('li'):
+    print(li.get_text())
+    print(li.string)
+    print(li.string)
