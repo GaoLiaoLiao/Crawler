@@ -17,7 +17,6 @@ def get_one_page(url):
     except RequestException:
         return None
 
-
 def parse_one_page(html):
     pattern = re.compile('<dd>.*?board-index.*?>(\d+)</i>.*?data-src="(.*?)".*?name"><a'
                          + '.*?>(.*?)</a>.*?star">(.*?)</p>.*?releasetime">(.*?)</p>'
@@ -42,12 +41,16 @@ def write_to_file(content):
 def main(offset):
     url = 'http://maoyan.com/board/4?offset=' + str(offset)
     html = get_one_page(url)
-    for item in parse_one_page(html):
+    # generator
+    parsed = parse_one_page(html)
+
+    for item in parsed:
         print(item)
         write_to_file(item)
 
 
 if __name__ == '__main__':
-    for i in range(10):
+    # for i in range(10):
+    for i in range(1):
         main(offset=i * 10)
         time.sleep(1)
